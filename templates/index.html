@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}虚拟机列表{% endblock %}
+
+{% block content %}
+<h2>所有虚拟机</h2>
+{% if vms %}
+<table>
+    <thead>
+        <tr>
+            <th>名称</th>
+            <th>模板</th>
+            <th>状态</th>
+            <th>内存 (MiB)</th>
+            <th>vCPU</th>
+            <th>创建时间</th>
+            <th>VNC 端口</th>
+            <th>操作</th>
+            <th>远程访问</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for vm in vms %}
+        <tr>
+            <td>{{ vm[0] }}</td> {# name #}
+            <td>{{ vm[1] }}</td> {# template_name #}
+            <td>{{ vm[2] }}</td> {# status #}
+            <td>{{ vm[3] }}</td> {# memory_mb #}
+            <td>{{ vm[4] }}</td> {# vcpu_count #}
+            <td>{{ vm[5] }}</td> {# creation_time #}
+            <td>{{ vm[6] if vm[6] else 'N/A' }}</td> {# vnc_port #}
+            <td>
+                <form action="{{ url_for('manage_vm_action', vm_name=vm[0]) }}" method="post" style="display:inline;">
+                    {% if vm[2] == '已关机' or vm[2] == '崩溃' or vm[2] == '无状态' %}
+                        <button type="submit" name="action" value="start" class="btn btn-start">启动</button>
+                    {% else %}
+                        <button type="submit" name="action" value="stop" class="btn btn-stop">关机</button>
+                        <button type="submit" name="action" value="destroy" class="btn btn-destroy">强制关机</button>
+                    {% endif %}
+                    <button type="submit" name="action" value="delete" class="btn btn-delete" onclick="return confirm('确定要删除虚拟机 {{ vm[0] }} 吗？这将永久删除虚拟机及其磁盘文件！');">删除</button>
+                </form>
+            </td>
+            <td>
+                {% if vm[2] == '运行中' and vm[6] %}
+                    <a href="{{ url_for('guacamole_link', vm_name=vm[0]) }}" target="_blank" class="btn btn-guacamole">Guacamole</a>
+                {% else %}
+                    N/A
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>没有找到任何虚拟机。</p>
+{% endif %}
+{% endblock %}
