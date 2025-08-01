@@ -8,22 +8,35 @@ def init_db():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS vms (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            connid INTEGER,
             name TEXT NOT NULL UNIQUE,
             template_name TEXT NOT NULL,
             status TEXT NOT NULL,
+            link TEXT NOT NULL,
             creation_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-            vnc_port INTEGER
+            vnc_port INTEGER,
+            memorysize INTEGER,
+            vcpucount INTEGER
         )
     ''')
     conn.commit()
     conn.close()
 
-def add_vm_record(name, template_name, status, vnc_port):
+def add_vm_record(
+        name, 
+        template_name, 
+        status, 
+        vnc_port, 
+        link, 
+        connid, 
+        memorysize,
+        vcpucount
+):
     """添加虚拟机记录"""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO vms (name, template_name, status, vnc_port) VALUES (?, ?, ?, ?)",
-                   (name, template_name, status, vnc_port))
+    cursor.execute("INSERT INTO vms (name, template_name, status, vnc_port, link, connid, memorysize, vcpucount) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                   (name, template_name, status, vnc_port, link, connid, memorysize, vcpucount))
     conn.commit()
     conn.close()
 
@@ -47,7 +60,7 @@ def get_all_vm_records():
     """获取所有虚拟机记录"""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT name, template_name, status, creation_time, vnc_port FROM vms ORDER BY creation_time DESC")
+    cursor.execute("SELECT connid, name, template_name, status, creation_time, vnc_port, link, memorysize, vcpucount FROM vms ORDER BY creation_time DESC")
     vms = cursor.fetchall()
     conn.close()
     return vms
@@ -56,7 +69,7 @@ def get_vm_record(name):
     """获取单个虚拟机记录"""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT name, template_name, status, creation_time, vnc_port FROM vms WHERE name = ?", (name,))
+    cursor.execute("SELECT name, template_name, status, creation_time, vnc_port link, connid, memorysize, vcpucount FROM vms WHERE name = ?", (name,))
     vm = cursor.fetchone()
     conn.close()
     return vm

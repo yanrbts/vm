@@ -1,0 +1,15 @@
+[Unit]
+Description=Libvirt VM Management API Service
+After=network.target libvirtd.service # 确保在网络和libvirtd服务启动后启动
+
+[Service]
+User=root             
+Group=root            
+WorkingDirectory=/opt/virtm
+ExecStart=/usr/bin/uvicorn libvirt_server:app --host 0.0.0.0 --port 5001 --workers 1
+Restart=always
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
