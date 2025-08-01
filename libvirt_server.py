@@ -122,7 +122,7 @@ async def create_vm(request_data: VMCreateRequest):
                         return VMActionResponse(
                             message=f"Virtual machine '{data}' created failed",
                             success=False,
-                            data=data
+                            data=None
                         )
                 else:
                     raise HTTPException(
