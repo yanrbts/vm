@@ -1,5 +1,7 @@
+import os
 import sqlite3
-from config import DB_PATH
+# 数据库文件路径
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'vm_manager.db')
 
 def init_db():
     """初始化数据库，创建 VMs 表"""

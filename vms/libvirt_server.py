@@ -26,10 +26,54 @@ class VMDelete(BaseModel):
     vm_name: str = Field(..., description="Virtual Machine Name")
     connid: int = Field(..., gt=0, description="Virtual Machine Connect ID")
 
+class VMCreateResponse(BaseModel):
+    message: str
+    success: bool
+    data: dict | None = None
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "message": "Virtual machine created successfully",
+                "success": True,
+                "data": {
+                    "link": "https://192.168.3.132:8443/#/client/MTA5AGMAcG9zdGdyZXNxbA",
+                    "connid": 2,
+                    "vncport": 5900
+                }
+            }
+        }
+
+class VMGetVncPortResponse(BaseModel):
+    message: str
+    success: bool
+    data: dict | None = None
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "message": "Virtual machine created successfully",
+                "success": True,
+                "data": {
+                    "vm_name": "vm1",
+                    "vnc_port": 5900
+                }
+            }
+        }
+
 class VMActionResponse(BaseModel):
     message: str
     success: bool
     data: dict | None = None
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "message": "Virtual machine created successfully",
+                "success": True,
+                "data": {}
+            }
+        }
 
 class VMDetails(BaseModel):
     name: str
@@ -89,7 +133,11 @@ async def list_vms():
             detail=f"Failed to list VMs: {e}"
         )
 
-@app.post("/api/v1/vms", response_model=VMActionResponse, status_code=status.HTTP_201_CREATED, summary="Create a new Virtual Machine")
+@app.post("/api/v1/vms", 
+    response_model=VMCreateResponse, 
+    status_code=status.HTTP_201_CREATED, 
+    summary="Create a new Virtual Machine",
+)
 async def create_vm(request_data: VMCreateRequest):
     """
     Creates a new virtual machine with the provided name, memory, and number of CPUs.
@@ -113,27 +161,37 @@ async def create_vm(request_data: VMCreateRequest):
 
                     if status:
                         logger.info(f"VM '{request_data.vm_name}': {data['link']}")
-                        return VMActionResponse(
+                        return VMCreateResponse(
                             message=f"Virtual machine '{request_data.vm_name}' created and started successfully.",
                             success=True,
                             data=data
                         )
                     else:
-                        return VMActionResponse(
+                        return VMCreateResponse(
                             message=f"Virtual machine '{data}' created failed",
                             success=False,
                             data=None
                         )
                 else:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=f"Failed to create VM: {result}"
+                    # raise HTTPException(
+                    #     status_code=status.HTTP_400_BAD_REQUEST,
+                    #     detail=f"Failed to create VM: {result}"
+                    # )
+                    return VMCreateResponse(
+                        message=data,
+                        success=False,
+                        data=None
                     )
         else:
             logger.error(f"Failed to create VM '{request_data.vm_name}': {result}")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Failed to create VM: {result}"
+            # raise HTTPException(
+            #     status_code=status.HTTP_400_BAD_REQUEST,
+            #     detail=f"Failed to create VM: {result}"
+            # )
+            return VMCreateResponse(
+                message=result,
+                success=False,
+                data=None
             )
     except Exception as e:
         logger.error(f"Unexpected error creating VM '{request_data.vm_name}': {e}", exc_info=True)
@@ -214,7 +272,7 @@ async def delete_vm(request_data: VMDelete):
             detail=f"Failed to delete VM: {message}"
         )
 
-@app.get("/api/v1/vms/{vm_name}/vnc_port", summary="Get VNC port of a Virtual Machine")
+@app.get("/api/v1/vms/{vm_name}/vnc_port", response_model=VMGetVncPortResponse, summary="Get VNC port of a Virtual Machine")
 async def get_vm_vnc_port(vm_name: str):
     """
     Gets the VNC port of the specified virtual machine.
@@ -222,7 +280,13 @@ async def get_vm_vnc_port(vm_name: str):
     logger.info(f"Received request for VNC port of VM: {vm_name}")
     vnc_port = libvirt_manager.get_vm_vnc_port(vm_name)
     if vnc_port:
-        return {"vm_name": vm_name, "vnc_port": vnc_port}
+        # return {"vm_name": vm_name, "vnc_port": vnc_port}
+        msg = f"VM '{vm_name}' vnc port : {vnc_port}"
+        return VMGetVncPortResponse(
+            message=msg, 
+            data={"vm_name": vm_name, "vnc_port": vnc_port},
+            success=True
+        )
     else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

@@ -1,0 +1,8 @@
+Flask
+libvirt-python
+python-dotenv
+requests
+uvicorn
+pydantic
+fastapi
+simplejson
